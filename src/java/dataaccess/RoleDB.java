@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import models.Role;
 import models.User;
 
@@ -15,103 +17,71 @@ import models.User;
 public class RoleDB {
 
     public List<Role> getAll() throws Exception {
-        List<Role> roles = new ArrayList<>();
-        ConnectionPool cp = ConnectionPool.getInstance();
-        Connection con = cp.getConnection();
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        String sql = "SELECT * FROM role";
-        try {
-            ps = con.prepareStatement(sql);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                int roleId = rs.getInt(1);
-                String roleName = rs.getString(2);
-                Role role = new Role(roleId, roleName);
-                roles.add(role);
-            }
+       EntityManager em = DBUtil.getEmFactory().createEntityManager();
+        
+        try{
+           List<Role> roles = em.createNamedQuery("Role.findAll", Role.class).getResultList();
+           return roles;
+            
         } finally {
-            DBUtil.closeResultSet(rs);
-            DBUtil.closePreparedStatement(ps);
-            cp.freeConnection(con);
+            em.close();
         }
-
-        return roles;
     }
 
     public Role get(int roleId) throws Exception {
-        Role role = null;
-        ConnectionPool cp = ConnectionPool.getInstance();
-        Connection con = cp.getConnection();
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        String sql = "SELECT * FROM role WHERE role_id=?";
-
-        try {
-            ps = con.prepareStatement(sql);
-            ps.setInt(1, roleId);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                String roleName = rs.getString(2);
-                role = new Role(roleId, roleName);
-            }
-        } finally {
-            DBUtil.closeResultSet(rs);
-            DBUtil.closePreparedStatement(ps);
-            cp.freeConnection(con);
+        EntityManager em = DBUtil.getEmFactory().createEntityManager();
+        
+        try{
+            Role roles = em.find(Role.class, roleId);
+            return roles;
+        }finally{
+            em.close();
         }
-
-        return role;
     }
 
     public void insert(Role role) throws Exception {
-        ConnectionPool cp = ConnectionPool.getInstance();
-        Connection con = cp.getConnection();
-        PreparedStatement ps = null;
-        String sql = "INSERT INTO role (role_id, role_name) VALUES (?, ?)";
-
+       EntityManager em = DBUtil.getEmFactory().createEntityManager();
+       EntityTransaction trans = em.getTransaction();
+       
         try {
-            ps = con.prepareStatement(sql);
-            ps.setInt(1, role.getRoleId());
-            ps.setString(2, role.getRoleName());
-            ps.executeUpdate();
+            trans.begin();
+            em.persist(role);
+            em.merge(role);
+            trans.commit();
+        }catch (Exception ex){
+            trans.rollback();    
         } finally {
-            DBUtil.closePreparedStatement(ps);
-            cp.freeConnection(con);
+          em.close(); 
         }
     }
 
     public void update(Role role) throws Exception {
-        ConnectionPool cp = ConnectionPool.getInstance();
-        Connection con = cp.getConnection();
-        PreparedStatement ps = null;
-        String sql = "UPDATE role SET role_name=? WHERE role_id=?";
-
+       EntityManager em = DBUtil.getEmFactory().createEntityManager();
+       EntityTransaction trans = em.getTransaction();
+       
         try {
-            ps = con.prepareStatement(sql);
-            ps.setString(1, role.getRoleName());
-            ps.setInt(2, role.getRoleId());
-            ps.executeUpdate();
+            trans.begin();
+            em.merge(role);
+            trans.commit();
+        }catch (Exception ex){
+            trans.rollback();    
         } finally {
-            DBUtil.closePreparedStatement(ps);
-            cp.freeConnection(con);
+          em.close(); 
         }
     }
 
     public void delete(Role role) throws Exception {
-        ConnectionPool cp = ConnectionPool.getInstance();
-        Connection con = cp.getConnection();
-        PreparedStatement ps = null;
-        String sql = "DELETE FROM role WHERE role_id=?";
-
+       EntityManager em = DBUtil.getEmFactory().createEntityManager();
+       EntityTransaction trans = em.getTransaction();
+       
         try {
-            ps = con.prepareStatement(sql);
-            ps.setInt(1, role.getRoleId());
-            ps.executeUpdate();
+            trans.begin();
+            em.remove(em.merge(role));
+            trans.commit();
+        }catch (Exception ex){
+            trans.rollback();    
         } finally {
-            DBUtil.closePreparedStatement(ps);
-            cp.freeConnection(con);
+          em.close(); 
         }
     }
 }

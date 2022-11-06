@@ -22,6 +22,11 @@ public class UserServlet extends HttpServlet {
         
         String action = request.getParameter("action");
         String email = request.getParameter("email");
+        String firstname = request.getParameter("firstname");
+        String lastname = request.getParameter("lastname");
+        String password = request.getParameter("password");
+        String roleName = request.getParameter("role");
+        Role role = new Role();
         request.setAttribute("action", action);
         request.setAttribute("email", email);
         UserService us = new UserService();
@@ -30,7 +35,7 @@ public class UserServlet extends HttpServlet {
             switch(action){
                 case "delete":
                     try{
-                     us.delete(email);   
+                     us.delete(email, firstname, lastname, password, role);   
                     }
                     catch (Exception ex) {
                     Logger.getLogger(UserServlet.class.getName()).log(Level.SEVERE, null, ex);
@@ -92,8 +97,7 @@ public class UserServlet extends HttpServlet {
             switch(action){
                 case "add":
                     try{
-                    User user = new User(email, firstname, lastname, password, role);
-                    us.insert(user);   
+                    us.insert(email, firstname, lastname, password, role);   
                     }
                     catch (Exception ex) {
                     Logger.getLogger(UserServlet.class.getName()).log(Level.SEVERE, null, ex);
@@ -101,8 +105,7 @@ public class UserServlet extends HttpServlet {
                     }
                 case "edit":
                      try {
-                User user = new User(email, firstname, lastname, password, role);
-                    us.update(user);
+                    us.update(email, firstname, lastname, password, role);
                 } catch (Exception ex) {
                 Logger.getLogger(UserServlet.class.getName()).log(Level.SEVERE, null, ex);
                 request.setAttribute("message", "Error editing user");
